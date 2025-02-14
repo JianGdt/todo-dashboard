@@ -1,4 +1,5 @@
 /* eslint-disable react/prop-types */
+import { Timestamp } from "firebase/firestore";
 import { useState, useEffect } from "react";
 import { updateTask } from "../../services/request.js";
 import { toast } from "react-toastify";
@@ -8,12 +9,11 @@ const EditTask = ({ task, onClose, onUpdate }) => {
   const [taskData, setTaskData] = useState({
     title: task.title || "",
     description: task.description || "",
-    expiryDate: task.expiryDate
-      ? new Date(task.expiryDate?.toDate ? task.expiryDate.toDate() : task.expiryDate)
-          .toISOString()
-          .split("T")[0]
+    expiryDate: task.expiryDate && !isNaN(new Date(task.expiryDate))
+      ? new Date(task.expiryDate).toISOString().split("T")[0] 
       : "",
   });
+  
   const [isSaving, setIsSaving] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
 
@@ -31,7 +31,7 @@ const EditTask = ({ task, onClose, onUpdate }) => {
           toast.error("Failed to save changes!", { error });
         }
       }
-    }, 1200);
+    }, 5000);
 
     return () => clearTimeout(saveDraft);
   }, [taskData, hasChanges, task.id, onUpdate]);
@@ -41,22 +41,32 @@ const EditTask = ({ task, onClose, onUpdate }) => {
     setHasChanges(true);
   };
 
+
   const handleSave = async () => {
     setIsSaving(true);
     try {
-      const updatedTask = { ...task, ...taskData, expiryDate: new Date(taskData.expiryDate) };
+      const updatedTask = { 
+        ...task, 
+        ...taskData, 
+        expiryDate: taskData.expiryDate 
+          ? Timestamp.fromDate(new Date(taskData.expiryDate)) 
+          : null, 
+      };
+  
       await updateTask(task.id, updatedTask);
-
       onUpdate(task.id, updatedTask);
-
       toast.success("Task updated successfully!");
       onClose();
     } catch (error) {
-      toast.error("Failed to update task!", { error });
+      toast.error("Failed to update task!");
+      console.error("Update error:", error);
     } finally {
       setIsSaving(false);
     }
   };
+  
+   
+  
 
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-black/50 backdrop-blur-sm z-50">

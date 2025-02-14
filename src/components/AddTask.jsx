@@ -2,31 +2,35 @@
 import { useState } from "react";
 import { toast } from "react-toastify";
 import { useDispatch } from "react-redux";
-import { createTask } from "../store/tasks.js";
+import { addNewTask, createTask } from "../store/tasks.js";
 
 const AddTask = () => {
     const dispatch = useDispatch();
     const [task, setTask] = useState({ title: "", description: "", expiryDate: "" });
-  
     const handleChange = (e) => {
       setTask({ ...task, [e.target.name]: e.target.value });
     };
-  
     const handleSubmit = async (e) => {
-      e.preventDefault();
-      if (!task.title || !task.expiryDate) {
-        return toast.error("Title and Expiry Date are required!");
-      }
-  
-      try {
-        const taskId = await createTask({ ...task, category: "To Do" });
-        toast.success("Task added successfully!");
-        dispatch(addNewTask({ id: taskId, ...task }));
-        setTask({ title: "", description: "", expiryDate: "" });
-      } catch (error) {
-        toast.error("Failed to add task. Please try again.", { error });
-      }
-    };
+        e.preventDefault();
+        if (!task.title || !task.expiryDate) {
+          return toast.error("Title and Expiry Date are required!");
+        }
+        try {
+          const newTask = { ...task, category: "To Do" };
+          const taskId = await dispatch(createTask(newTask)).unwrap();
+      
+          if (taskId) {
+            dispatch(addNewTask({ id: taskId, ...newTask }));
+            toast.success("Task added successfully!");
+            setTask({ title: "", description: "", expiryDate: "" });
+          } else {
+            throw new Error("Task creation failed");
+          }
+        } catch (error) {
+          toast.error("Failed to add task. Please try again.", { error });
+        }
+      };
+      
   
     return (
       <form onSubmit={handleSubmit} className="bg-gray-100 p-6 rounded-lg shadow-md flex flex-col gap-4">
