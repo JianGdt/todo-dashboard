@@ -1,6 +1,6 @@
-import { Timestamp } from "firebase/firestore";
 import { configureStore, createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import { fetchTasks, addTask, updateTask, deleteTask } from "../services/request.js";
+import { toast } from "react-toastify";
 
 export const loadTasks = createAsyncThunk(
     "tasks/loadTasks",
@@ -8,28 +8,23 @@ export const loadTasks = createAsyncThunk(
       try {
         return await fetchTasks();
       } catch (error) {
-        return rejectWithValue("Failed to load tasks", {error}); // Ensure it's a plain string
+        return rejectWithValue("Failed to load tasks", {error}); 
       }
     }
   );
-  
 
-export const createTask = createAsyncThunk("tasks/createTask", async (task, { rejectWithValue }) => {
-  try {
-    const taskId = await addTask(task);
-    if (!taskId) throw new Error("Task ID is undefined");
-
-    return {
-      id: taskId,
-      ...task,
-      expiryDate: task.expiryDate
-  ? new Date(task.expiryDate).toISOString().split("T")[0] 
-  : "",
-    };
-  } catch (error) {
-    return rejectWithValue("Failed to add task",{error});
-  }
-});
+export const createTask = createAsyncThunk("tasks/createTask", async (taskData, { rejectWithValue }) => {
+    try {
+      const newTask = await addTask(taskData);
+      if (!newTask.id) {
+        throw new Error("Task ID is undefined");
+      }
+      return newTask;
+    } catch (error) {
+      console.error("Task creation error:", error);
+      return rejectWithValue("Failed to add task");
+    }
+  });
 
 export const editTask = createAsyncThunk("tasks/editTask", async ({ taskId, updatedFields }, { getState, rejectWithValue }) => {
     try {
@@ -39,10 +34,10 @@ export const editTask = createAsyncThunk("tasks/editTask", async ({ taskId, upda
       const updatedTask = {
         ...currentTask,
         ...updatedFields,
+        id: String(taskId), 
         expiryDate: updatedFields.expiryDate 
-          ? Timestamp.fromDate(new Date(updatedFields.expiryDate)) 
+          ? new Date(updatedFields.expiryDate).toISOString() 
           : currentTask.expiryDate,
-        
         updates: [
           ...(currentTask.updates || []),
           { action: "Task updated", timestamp: new Date().toISOString() },
@@ -55,7 +50,6 @@ export const editTask = createAsyncThunk("tasks/editTask", async ({ taskId, upda
       return rejectWithValue("Failed to update task");
     }
   });
-  
 
 export const removeTask = createAsyncThunk("tasks/removeTask", async (taskId, { rejectWithValue }) => {
   try {
@@ -70,6 +64,8 @@ const initialState = {
   tasks: [],
   loading: false,
   error: null,
+  expiredTasks: [],
+drafts: {},
 };
 
 const tasksSlice = createSlice({
@@ -84,14 +80,17 @@ const tasksSlice = createSlice({
         state.tasks.push(action.payload);
       },
       updateTaskState: (state, action) => {
-        const index = state.tasks.findIndex((task) => task.id === action.payload.id);
-        if (index !== -1) {
-          state.tasks[index] = {
-            ...state.tasks[index],
-            ...action.payload,
-            updates: action.payload.updates || state.tasks[index].updates, 
-          };
+        const { id, category, expiryDate } = action.payload;
+        const taskIndex = state.tasks.findIndex(task => task.id === id);
+        if (taskIndex === -1) {
+          console.error("Update Task Error: Task not found", id);
+          return;
         }
+        state.tasks[taskIndex] = {
+          ...state.tasks[taskIndex],
+          category,
+          expiryDate,
+        };
       },
       deleteTaskState: (state, action) => {
         state.tasks = state.tasks.filter((task) => task.id !== action.payload);
@@ -101,6 +100,20 @@ const tasksSlice = createSlice({
       },
       setError: (state, action) => {
         state.error = action.payload;
+      },
+      checkExpiredTasks: (state) => {
+        const now = new Date().toISOString();
+        state.expiredTasks = state.tasks.filter(task => task.expiryDate && task.expiryDate < now);
+        state.expiredTasks.forEach(task => {
+          toast.warning(`Task "${task.title}" has expired!`);
+        });
+      },
+      saveDraft: (state, action) => {
+        const { taskId, content } = action.payload;
+        state.drafts[taskId] = content; 
+      },
+      clearDraft: (state, action) => {
+        delete state.drafts[action.payload];  
       },
     },
     extraReducers: (builder) => {
@@ -118,7 +131,16 @@ const tasksSlice = createSlice({
           state.loading = false;
         })
         .addCase(createTask.fulfilled, (state, action) => {
-          state.tasks.push(action.payload);
+            const newTask = {
+                ...action.payload,
+                id: String(action.payload.id), 
+            };
+            const exists = state.tasks.some((task) => task.id === newTask.id);
+            if (!exists) {
+                state.tasks.push(newTask);
+            } else {
+                console.warn(`Task with ID ${newTask.id} already exists, skipping.`);
+            }
         })
         .addCase(createTask.rejected, (state, action) => {
           state.error = action.payload;
@@ -129,9 +151,9 @@ const tasksSlice = createSlice({
               state.tasks[index] = {
                 ...state.tasks[index],
                 ...action.payload,
-                expiryDate: action.payload.expiryDate
-                  ? new Date(action.payload.expiryDate.seconds * 1000).toISOString()
-                  : null,
+               expiryDate: typeof action.payload.expiryDate === "object" && action.payload.expiryDate.seconds
+                ? new Date(action.payload.expiryDate.seconds * 1000).toISOString()
+                : action.payload.expiryDate,
               };
             }
           })          
@@ -147,14 +169,16 @@ const tasksSlice = createSlice({
     },
   });
   
-  // ✅ Ensure you export `updateTaskState`
   export const {
     setTasks,
     addNewTask,
-    updateTaskState, // 🔹 Now properly defined and exported
+    updateTaskState, 
     deleteTaskState,
     setLoading,
     setError,
+    checkExpiredTasks,
+    saveDraft,
+    clearDraft,
   } = tasksSlice.actions;
   
   export const store = configureStore({
