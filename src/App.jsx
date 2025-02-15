@@ -8,16 +8,22 @@ import Profile from "./components/Profile";
 
 function App() {
   const { isAuthenticated, isLoading } = useAuth0();
-
   if (isLoading) {
-    return <p>Loading...</p>;
+    return <p className="text-center mt-10 text-lg">Loading...</p>;
   }
 
   return (
     <Provider store={store}>
-      <ToastContainer position="top-right" autoClose={3000} hideProgressBar />
-      <Profile/>
-      {isAuthenticated ? <TaskBoard /> : <AuthButtons />}
+      <div className="h-screen flex flex-col bg-gray-100">
+        <ToastContainer position="top-right" autoClose={3000} hideProgressBar />
+        <header className="flex justify-between items-center px-6 py-4 bg-blue-600 text-white shadow-md">
+          <h1 className="text-xl font-bold tracking-wide">Task Board</h1>
+          <Profile />
+        </header>
+        <main className="flex flex-grow p-6">
+          {isAuthenticated ? <TaskBoard /> : <AuthButtons />}
+        </main>
+      </div>
     </Provider>
   );
 }

@@ -13,10 +13,11 @@ export const loadTasks = createAsyncThunk(
     }
   );
 
-export const createTask = createAsyncThunk("tasks/createTask", async (taskData, { rejectWithValue }) => {
+  export const createTask = createAsyncThunk("tasks/createTask", async (taskData, { rejectWithValue }) => {
     try {
       const newTask = await addTask(taskData);
-      if (!newTask.id) {
+      console.log("New Task Response:", newTask); 
+      if (!newTask || !newTask.id) {
         throw new Error("Task ID is undefined");
       }
       return newTask;
@@ -24,7 +25,7 @@ export const createTask = createAsyncThunk("tasks/createTask", async (taskData, 
       console.error("Task creation error:", error);
       return rejectWithValue("Failed to add task");
     }
-  });
+});
 
 export const editTask = createAsyncThunk("tasks/editTask", async ({ taskId, updatedFields }, { getState, rejectWithValue }) => {
     try {
@@ -61,11 +62,11 @@ export const removeTask = createAsyncThunk("tasks/removeTask", async (taskId, { 
 });
 
 const initialState = {
-  tasks: [],
-  loading: false,
-  error: null,
-  expiredTasks: [],
-drafts: {},
+    tasks: [],
+    loading: false,
+    error: null,
+    expiredTasks: [],
+    drafts: {},
 };
 
 const tasksSlice = createSlice({
@@ -151,7 +152,7 @@ const tasksSlice = createSlice({
               state.tasks[index] = {
                 ...state.tasks[index],
                 ...action.payload,
-               expiryDate: typeof action.payload.expiryDate === "object" && action.payload.expiryDate.seconds
+                expiryDate: typeof action.payload.expiryDate === "object" && action.payload.expiryDate.seconds
                 ? new Date(action.payload.expiryDate.seconds * 1000).toISOString()
                 : action.payload.expiryDate,
               };
