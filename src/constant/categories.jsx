@@ -1,0 +1,1 @@
+export const TODO_CATEGORIES = ["To Do", "In Progress", "Done"]

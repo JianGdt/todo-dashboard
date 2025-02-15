@@ -1,18 +1,23 @@
 /* eslint-disable react/prop-types */
-import { Timestamp } from "firebase/firestore";
 import { useState, useEffect } from "react";
 import { updateTask } from "../../services/request.js";
 import { toast } from "react-toastify";
 import { FaRegClock, FaCheckCircle, FaTimes } from "react-icons/fa";
+import { clearDraft, saveDraft } from "../../store/tasks.js";
+import { useDispatch, useSelector } from "react-redux";
 
 const EditTask = ({ task, onClose, onUpdate }) => {
-  const [taskData, setTaskData] = useState({
-    title: task.title || "",
-    description: task.description || "",
-    expiryDate: task.expiryDate && !isNaN(new Date(task.expiryDate))
+  const dispatch = useDispatch();
+  const drafts = useSelector((state) => state.tasks.drafts || {}); // Ensure drafts is an object
+ const [taskData, setTaskData] = useState(
+    drafts[task.id] || {
+      title: task.title || "",
+      description: task.description || "",
+      expiryDate: task.expiryDate && !isNaN(new Date(task.expiryDate))
       ? new Date(task.expiryDate).toISOString().split("T")[0] 
       : "",
-  });
+    }
+  );
   
   const [isSaving, setIsSaving] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
@@ -36,6 +41,14 @@ const EditTask = ({ task, onClose, onUpdate }) => {
     return () => clearTimeout(saveDraft);
   }, [taskData, hasChanges, task.id, onUpdate]);
 
+  useEffect(() => {
+    const autoSave = setTimeout(() => {
+      dispatch(saveDraft({ taskId: task.id, content: taskData }));
+    }, 5000);
+    
+    return () => clearTimeout(autoSave);
+  }, [taskData, dispatch, task.id]);
+
   const handleChange = (e) => {
     setTaskData({ ...taskData, [e.target.name]: e.target.value });
     setHasChanges(true);
@@ -43,27 +56,20 @@ const EditTask = ({ task, onClose, onUpdate }) => {
 
 
   const handleSave = async () => {
-    setIsSaving(true);
     try {
-      const updatedTask = { 
-        ...task, 
-        ...taskData, 
-        expiryDate: taskData.expiryDate 
-          ? Timestamp.fromDate(new Date(taskData.expiryDate)) 
-          : null, 
-      };
-  
+      const updatedTask = { ...task, ...taskData, expiryDate: new Date(taskData.expiryDate) };
       await updateTask(task.id, updatedTask);
       onUpdate(task.id, updatedTask);
+      dispatch(clearDraft(task.id)); 
       toast.success("Task updated successfully!");
       onClose();
     } catch (error) {
-      toast.error("Failed to update task!");
-      console.error("Update error:", error);
-    } finally {
-      setIsSaving(false);
+      toast.error("Failed to update task!", { error });
     }
   };
+  
+  
+  
   
    
   

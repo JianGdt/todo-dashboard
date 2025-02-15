@@ -14,7 +14,7 @@ export default function TaskCard({ task, handleDragStart, onEdit, onDelete  }) {
         <p className="text-red-500 text-sm">Expiry: {task.expiryDate ? new Date(task.expiryDate).toDateString() : "No Date"}</p>
         <button
         onClick={(e) => {
-          e.stopPropagation(); // Prevent triggering onEdit when clicking delete
+          e.stopPropagation(); 
           onDelete(task.id);
         }}
         className="mt-2 flex items-center gap-1 text-red-600 hover:text-red-800 text-sm"
