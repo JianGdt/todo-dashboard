@@ -1,4 +1,3 @@
-# Logs
 logs
 *.log
 npm-debug.log*
@@ -11,10 +10,17 @@ lerna-debug.log*
 *node_modules/*
 dist
 dist-ssr
-frontend/*.local
-frontend/*env.local
-frontend/*env
-frontend/node_modules
+*.env
+*.env.local
+*.env.development
+*.env.production
+*.env.test
+*.env*.local
+dist/
+build/
+
+
+.firebaserc
 
 
 
