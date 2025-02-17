@@ -8,18 +8,18 @@ const AuthButtons = () => {
   const {  logout, isAuthenticated,  } = useAuth();
 
   return (
-    <div className="flex flex-col items-center text-center">
+    <div className="flex flex-col items-center m-auto text-center">
       {!isAuthenticated && <FaUserCircle className="mb-4 text-6xl text-gray-400" />}
       {!isAuthenticated && (
         <p className="mb-4 text-gray-600">
-          Please log in or sign up to access your task management dashboard.
+          Please log in or sign up to access your task dashboard.
         </p>
       )}
       {!isAuthenticated ? (
-        <>
-        <SignupButton/>
+        <div className="flex gap-6">
         <LoginButton/>
-        </>
+        <SignupButton/>
+        </div>
       ) : (
         <button
           onClick={() => logout({ returnTo: window.location.origin })}

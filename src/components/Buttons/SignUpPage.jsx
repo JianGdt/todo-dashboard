@@ -15,9 +15,6 @@ export const SignupButton = () => {
     });
   };
 
-  return (
-    <button onClick={handleSignUp}>
-      Sign Up
-    </button>
-  );
+  return <button onClick={handleSignUp} className="px-4 border border-black rounded-md">Sign Up</button>
+
 };

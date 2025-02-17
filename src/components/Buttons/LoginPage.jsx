@@ -10,10 +10,5 @@ export const LoginButton = () => {
       },
     });
   };
-
-  return (
-    <button onClick={handleLogin}>
-      Log In
-    </button>
-  );
+  return <button onClick={handleLogin} className="px-4 border border-black rounded-md">Log In</button>
 };
