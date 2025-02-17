@@ -8,14 +8,15 @@ import { deleteTask } from "../services/request.js";
 import { TODO_CATEGORIES } from "../constant/categories.jsx";
 import AddTask from "./AddTask";
 import TaskCard from "./TaskCard";
-import EditTask from "./modal/EditTask.jsx";
+import EditTask from "./Modal/EditTask.jsx";
 import TaskExpiryNotification from "./TaskExpiryNotification.jsx";
 import TaskHistory from "./TaskHistory.jsx";
 import { motion } from "framer-motion";
+import Skeleton from "./Skeleton/SkeletonLoading.jsx";
 
 const TaskBoard = () => {
     const dispatch = useDispatch();
-    const { tasks, loading } = useSelector((state) => state.tasks);
+    const { tasks, isLoading } = useSelector((state) => state.tasks);
     const [draggingTask, setDraggingTask] = useState(null);
     const [draggingOverCategory, setDraggingOverCategory] = useState(null);
     const [editingTask, setEditingTask] = useState(null);
@@ -44,19 +45,27 @@ const TaskBoard = () => {
     }, [dispatch, tasks]);
 
     useEffect(() => {
-        const nearExpiryTask = tasks.find(task => {
-            if (!task.expiryDate) return false;
-            const expiryTime = new Date(task.expiryDate).getTime();
-            const now = Date.now();
-            return expiryTime - now < 48 * 60 * 60 * 1000; 
-        });
-        if (nearExpiryTask) setShowExpiryPopup(true);
+        const hasShownPopup = sessionStorage.getItem("expiryPopupShown");
+    
+        if (!hasShownPopup) {
+            const nearExpiryTask = tasks.find(task => {
+                if (!task.expiryDate) return false;
+                const expiryTime = new Date(task.expiryDate).getTime();
+                const now = Date.now();
+                return expiryTime - now < 48 * 60 * 60 * 1000; 
+            });
+    
+            if (nearExpiryTask) {
+                setShowExpiryPopup(true);
+                sessionStorage.setItem("expiryPopupShown", "true");
+            }
+        }
     }, [tasks]);
-
+    
     const handleClosePopup = () => {
         setShowExpiryPopup(false);
     };
-
+    
     const handleDragStart = useCallback((e, taskId) => {
         e.dataTransfer.setData("taskId", taskId);
         setDraggingTask(taskId);
@@ -117,14 +126,18 @@ const TaskBoard = () => {
         }
     }, [dispatch]);
 
+    const handleCloseHistory = useCallback(() => {
+        setShowHistory(false);
+    }, []);
+
     const filteredTasks = useMemo(() => tasks.filter((task) => !task.deleted), [tasks]);
 
-    if (loading) return <p className="text-center text-lg font-semibold">Loading tasks...</p>;
+    if (isLoading) return <Skeleton/>
 
     return (
-        <div className="p-4">
+        <div className="w-full p-4">
             {showExpiryPopup && (
-                <div className="fixed top-4 right-4 bg-red-500 text-white px-4 py-2 rounded-lg shadow-lg z-50">
+                <div className="fixed z-50 px-4 py-2 text-white bg-red-500 rounded-lg shadow-lg top-4 right-4">
                     <p>⚠️ Some tasks are nearing expiry!</p>
                     <button className="ml-2 underline" onClick={handleClosePopup}>Dismiss</button>
                 </div>
@@ -140,21 +153,21 @@ const TaskBoard = () => {
             
             <TaskExpiryNotification tasks={filteredTasks} />
             <button
-                className="self-start bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition"
+                className="self-start px-4 py-2 text-white transition bg-blue-600 rounded-lg hover:bg-blue-700"
                 onClick={() => setShowHistory((prev) => !prev)}
             >
                 {showHistory ? "Close History" : "View History"}
             </button>
             
             <motion.div 
-                className="fixed top-0 right-0 h-full bg-white shadow-lg w-80 p-4 z-50"
+                className="fixed top-0 right-0 z-50 h-full p-4 bg-white shadow-lg w-80"
                 animate={{ x: showHistory ? 0 : 320 }}
                 transition={{ type: "spring", stiffness: 150 }}
             >
-                <TaskHistory tasks={filteredTasks} />
+                <TaskHistory tasks={filteredTasks} onClose={handleCloseHistory}/>
             </motion.div>
 
-            <div className="flex flex-col md:flex-row gap-6 overflow-x-auto pb-6">
+            <div className="flex flex-col gap-6 pb-6 overflow-x-auto md:flex-row">
                 <AddTask />
                 
                 {TODO_CATEGORIES?.map((category) => (
@@ -166,8 +179,8 @@ const TaskBoard = () => {
                             draggingOverCategory === category ? "border-blue-500 bg-blue-100" : "border-gray-300"
                         }`}
                     >
-                        <h2 className="text-lg font-bold text-gray-800 text-center mb-3">{category}</h2>
-                        <div className="flex flex-col gap-3 overflow-y-auto h-full">
+                        <h2 className="mb-3 text-lg font-bold text-center text-gray-800">{category}</h2>
+                        <div className="flex flex-col h-full gap-3 overflow-y-auto">
                             {filteredTasks
                                 .filter((task) => task.category === category)
                                 .map((task) => (
