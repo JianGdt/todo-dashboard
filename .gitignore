@@ -15,7 +15,6 @@ dist-ssr
 *.env.development
 *.env.production
 *.env.test
-*.env*.local
 dist/
 build/
 
