@@ -8,7 +8,7 @@ import { deleteTask } from "../services/request.js";
 import { TODO_CATEGORIES } from "../constant/categories.jsx";
 import AddTask from "./AddTask";
 import TaskCard from "./TaskCard";
-import EditTask from "./Modal/EditTask.jsx";
+import EditTask from "./modal/EditTask";
 import TaskExpiryNotification from "./TaskExpiryNotification.jsx";
 import TaskHistory from "./TaskHistory.jsx";
 import { motion } from "framer-motion";
@@ -144,7 +144,7 @@ const TaskBoard = () => {
             )}
 
             {editingTask && editingTask.id && (
-                <EditTask 
+                <EditTask
                     onUpdate={handleUpdateTask} 
                     task={editingTask} 
                     onClose={() => setEditingTask(null)} 
