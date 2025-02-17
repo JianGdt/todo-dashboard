@@ -1,27 +1,33 @@
-import { useAuth0 } from "@auth0/auth0-react";
+import useAuth from "../hooks/useAuth"; 
 import { FaUserCircle } from "react-icons/fa";
+import { SignupButton } from "./Buttons/SignUpPage";
+import { LoginButton } from "./Buttons/LoginPage";
+
 
 const AuthButtons = () => {
-  const { loginWithRedirect, logout, isAuthenticated } = useAuth0();
+  const {  logout, isAuthenticated,  } = useAuth();
 
   return (
-    <div className="flex m-auto flex-col items-center text-center">
-      {!isAuthenticated && <FaUserCircle className="text-gray-400 text-6xl mb-4" />}
+    <div className="flex flex-col items-center text-center">
+      {!isAuthenticated && <FaUserCircle className="mb-4 text-6xl text-gray-400" />}
       {!isAuthenticated && (
-        <p className="text-gray-600 mb-4">
-          Please log in to access your task management dashboard.
+        <p className="mb-4 text-gray-600">
+          Please log in or sign up to access your task management dashboard.
         </p>
       )}
-      <button
-        onClick={() =>
-          isAuthenticated ? logout({ returnTo: window.location.origin }) : loginWithRedirect()
-        }
-        className={`w-full px-6 py-3 text-lg font-medium text-white rounded-lg shadow-md transition-all ${
-          isAuthenticated ? "bg-red-500 hover:bg-red-600" : "bg-blue-500 hover:bg-blue-600"
-        }`}
-      >
-        {isAuthenticated ? "Logout" : "Login"}
-      </button>
+      {!isAuthenticated ? (
+        <>
+        <SignupButton/>
+        <LoginButton/>
+        </>
+      ) : (
+        <button
+          onClick={() => logout({ returnTo: window.location.origin })}
+          className="w-full px-6 py-3 text-lg font-medium text-white bg-red-500 rounded-lg shadow-md hover:bg-red-600"
+        >
+          Logout
+        </button>
+      )}
     </div>
   );
 };
