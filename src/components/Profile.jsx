@@ -10,13 +10,13 @@ const Profile = () => {
 
   return (
     isAuthenticated && (
-      <div className="flex items-center justify-center gap-4 bg-white px-4 py-2 rounded-lg shadow-md border">
+      <div className="flex items-center justify-center gap-4 px-4 py-2 bg-white border rounded-lg shadow-md">
         <img 
           src={user.picture} 
           alt={user.name} 
           width={40} 
           height={40} 
-          className="rounded-full border border-gray-300" 
+          className="border border-gray-300 rounded-full" 
         />
         <div className="text-sm">
           <h2 className="font-semibold text-gray-800">{user.name}</h2>

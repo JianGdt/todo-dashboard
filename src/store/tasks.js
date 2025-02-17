@@ -63,7 +63,7 @@ export const removeTask = createAsyncThunk("tasks/removeTask", async (taskId, { 
 
 const initialState = {
     tasks: [],
-    loading: false,
+    isLoading: false,
     error: null,
     expiredTasks: [],
     drafts: {},
@@ -75,7 +75,7 @@ const tasksSlice = createSlice({
     reducers: {
       setTasks: (state, action) => {
         state.tasks = action.payload;
-        state.loading = false;
+        state.isLoading = false;
       },
       addNewTask: (state, action) => {
         state.tasks.push(action.payload);
@@ -96,8 +96,8 @@ const tasksSlice = createSlice({
       deleteTaskState: (state, action) => {
         state.tasks = state.tasks.filter((task) => task.id !== action.payload);
       },
-      setLoading: (state, action) => {
-        state.loading = action.payload;
+      setIsLoading: (state, action) => {
+        state.isLoading = action.payload;
       },
       setError: (state, action) => {
         state.error = action.payload;
@@ -120,16 +120,16 @@ const tasksSlice = createSlice({
     extraReducers: (builder) => {
       builder
         .addCase(loadTasks.pending, (state) => {
-          state.loading = true;
+          state.isLoading = true;
           state.error = null;
         })
         .addCase(loadTasks.fulfilled, (state, action) => {
           state.tasks = action.payload;
-          state.loading = false;
+          state.isLoading = false;
         })
         .addCase(loadTasks.rejected, (state, action) => {
           state.error = action.payload;
-          state.loading = false;
+          state.isLoading = false;
         })
         .addCase(createTask.fulfilled, (state, action) => {
             const newTask = {
@@ -175,11 +175,12 @@ const tasksSlice = createSlice({
     addNewTask,
     updateTaskState, 
     deleteTaskState,
-    setLoading,
+    setIsLoading,
     setError,
     checkExpiredTasks,
     saveDraft,
     clearDraft,
+    isLoading,
   } = tasksSlice.actions;
   
   export const store = configureStore({

@@ -1,22 +1,23 @@
 import { ToastContainer } from "react-toastify";
-import { useAuth0 } from "@auth0/auth0-react";
 import AuthButtons from "./components/AuthButton";
 import TaskBoard from "./components/TaskBoard";
 import { Provider } from "react-redux";
 import { store } from "./store/tasks";
 import Profile from "./components/Profile";
+import useAuth from "./hooks/useAuth.js"; 
 
 function App() {
-  const { isAuthenticated, isLoading } = useAuth0();
+  const { isAuthenticated, isLoading } = useAuth(); 
+
   if (isLoading) {
-    return <p className="text-center mt-10 text-lg">Loading...</p>;
+    return <p className="mt-10 text-lg text-center">Loading...</p>;
   }
 
   return (
     <Provider store={store}>
-      <div className="h-screen flex flex-col bg-gray-100">
+      <div className="flex flex-col h-screen bg-gray-100">
         <ToastContainer position="top-right" autoClose={3000} hideProgressBar />
-        <header className="flex justify-between items-center px-6 py-4 bg-blue-600 text-white shadow-md">
+        <header className="flex items-center justify-between px-6 py-4 text-white bg-blue-600 shadow-md">
           <h1 className="text-xl font-bold tracking-wide">Task Board</h1>
           <Profile />
         </header>
